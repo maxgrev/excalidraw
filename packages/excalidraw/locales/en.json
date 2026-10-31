@@ -11,6 +11,7 @@
     "chartType_bar": "Bar chart",
     "chartType_line": "Line chart",
     "chartType_radar": "Radar chart",
+    "chartType_table": "Table",
     "chartType_plaintext": "Plain text",
     "selectAll": "Select all",
     "multiSelect": "Add element to selection",
