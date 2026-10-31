@@ -11,6 +11,8 @@ import {
 } from "./charts.parse";
 import { renderRadarChart } from "./charts.radar";
 
+import { renderTable } from "./charts.table";
+
 import type { ChartElements, Spreadsheet } from "./charts.types";
 
 export {
@@ -36,6 +38,9 @@ export const renderSpreadsheet = (
   }
   if (chartType === "radar") {
     return renderRadarChart(spreadsheet, x, y, colorSeed, renderEnvironment);
+  }
+  if (chartType === "table") {
+    return renderTable(spreadsheet, x, y, colorSeed, renderEnvironment);
   }
   return renderBarChart(spreadsheet, x, y, colorSeed, renderEnvironment);
 };

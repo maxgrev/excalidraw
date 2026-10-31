@@ -15,7 +15,7 @@ import type {
   ValueOf,
 } from "@excalidraw/common/utility-types";
 
-export type ChartType = "bar" | "line" | "radar";
+export type ChartType = "bar" | "line" | "radar" | "table";
 export type FillStyle = "hachure" | "cross-hatch" | "solid" | "zigzag";
 export type FontFamilyKeys = keyof typeof FONT_FAMILY;
 export type FontFamilyValues = typeof FONT_FAMILY[FontFamilyKeys];
@@ -414,7 +414,7 @@ export type ExcalidrawElbowArrowElement = Merge<
      * point of the arrow in order to temporarily hide the last segment of the
      * arrow without losing the data from the points array. It allows creating
      * the expected arrow path when the arrow with fixed segments is bound on a
-     * horizontal side and moved to a vertical and vica versa.
+     * horizontal side and vica versa.
      */
     endIsSpecial: boolean | null;
   }
