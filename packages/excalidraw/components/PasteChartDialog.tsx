@@ -32,6 +32,8 @@ const getChartTypeLabel = (chartType: ChartType) => {
       return t("labels.chartType_line");
     case "radar":
       return t("labels.chartType_radar");
+    case "table":
+      return t("labels.chartType_table");
     default:
       return chartType;
   }
@@ -255,7 +257,7 @@ export const PasteChartDialog = ({
       autofocus={false}
     >
       <div className={"container"}>
-        {(["bar", "line", "radar"] as const).map((chartType) => {
+        {(["bar", "line", "radar", "table"] as const).map((chartType) => {
           if (!isSpreadsheetValidForChartType(data, chartType)) {
             return null;
           }
