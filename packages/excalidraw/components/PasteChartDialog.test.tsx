@@ -1,5 +1,7 @@
 import React from "react";
 
+import type { ExcalidrawTextElement } from "@excalidraw/element/types";
+
 import { createPasteEvent } from "../clipboard";
 import { Excalidraw } from "../index";
 import {
@@ -79,5 +81,40 @@ describe("<PasteChartDialog />", () => {
     expect(texts.map((el) => (el as { text: string }).text)).toEqual(
       expect.arrayContaining(["value", "A", "B", "C", "10", "20", "30"]),
     );
+  });
+
+  it("inserts the table with text bound to its cells and grouped", async () => {
+    pasteSpreadsheet("time\tvalue\nA\t10\nB\t20\nC\t30");
+
+    const tableButton = await screen.findByRole("button", { name: "Table" });
+    await waitFor(() => {
+      expect(
+        tableButton.querySelector(".ChartPreview__canvas svg"),
+      ).not.toBeNull();
+    });
+
+    fireEvent.click(tableButton);
+
+    await waitFor(() => {
+      expect(h.state.openDialog).toBe(null);
+    });
+
+    const rectangles = h.elements.filter((el) => el.type === "rectangle");
+    const texts = h.elements.filter(
+      (el): el is ExcalidrawTextElement => el.type === "text",
+    );
+    expect(texts.length).toBe(8);
+
+    // every cell's text (header row included) is bound to its cell
+    texts.forEach((text) => {
+      const cell = rectangles.find((rect) => rect.id === text.containerId);
+      expect(cell).toBeDefined();
+      expect(cell!.boundElements).toEqual([{ type: "text", id: text.id }]);
+    });
+
+    // the table is one group
+    const groupIds = new Set(h.elements.map((el) => el.groupIds[0]));
+    expect(groupIds.size).toBe(1);
+    expect(h.elements.every((el) => el.groupIds.length === 1)).toBe(true);
   });
 });

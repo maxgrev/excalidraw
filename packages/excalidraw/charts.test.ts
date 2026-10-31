@@ -1318,6 +1318,85 @@ describe("charts", () => {
       );
     });
 
+    it("binds each cell's text to its cell as a container", () => {
+      const { cells, texts } = getTable();
+
+      expect(texts).toHaveLength(cells.length);
+      texts.forEach((text) => {
+        const container = cells.find((cell) => cell.id === text.containerId);
+        expect(container).toBeDefined();
+        expect(container!.boundElements).toEqual([
+          { type: "text", id: text.id },
+        ]);
+        expect(text.textAlign).toBe("center");
+        expect(text.verticalAlign).toBe("middle");
+        // the text stays centered within, and fits inside, its cell
+        expect(text.x + text.width / 2).toBeCloseTo(
+          container!.x + container!.width / 2,
+        );
+        expect(text.y + text.height / 2).toBeCloseTo(
+          container!.y + container!.height / 2,
+        );
+      });
+      // every cell has exactly one text, so no text is shared
+      expect(new Set(texts.map((text) => text.containerId)).size).toBe(
+        texts.length,
+      );
+    });
+
+    it("binds the header row text to the header cells", () => {
+      const { cells, texts } = getTable();
+      const headerY = Math.min(...cells.map((cell) => cell.y));
+      const headerCells = cells.filter((cell) => cell.y === headerY);
+
+      expect(headerCells).toHaveLength(3);
+      const headerTexts = headerCells.map(
+        (cell) =>
+          texts.find((text) => text.id === cell.boundElements?.[0]?.id)?.text,
+      );
+      expect(headerTexts).toEqual(["Trait", "Dunk", "Egg"]);
+    });
+
+    it("leaves empty cells without bound text", () => {
+      const { cells, texts } = getTable({
+        title: null,
+        labels: ["a", "b"],
+        series: [{ title: "S", values: [1, 2] }],
+      });
+      const empty = cells.filter((cell) => !cell.boundElements?.length);
+      expect(empty).toHaveLength(1);
+      expect(texts.some((text) => text.containerId === empty[0].id)).toBe(
+        false,
+      );
+    });
+
+    it("groups the whole table together", () => {
+      const { elements } = getTable();
+
+      const groupIds = new Set(elements.map((element) => element.groupIds[0]));
+      expect(groupIds.size).toBe(1);
+      elements.forEach((element) => expect(element.groupIds).toHaveLength(1));
+    });
+
+    it("gives each rendered table its own group", () => {
+      const first = getTable().elements[0].groupIds[0];
+      const second = getTable().elements[0].groupIds[0];
+      expect(first).not.toBe(second);
+    });
+
+    it("keeps the header row visually distinct", () => {
+      const { cells } = getTable();
+      const headerY = Math.min(...cells.map((cell) => cell.y));
+
+      cells.forEach((cell) => {
+        if (cell.y === headerY) {
+          expect(cell.backgroundColor).not.toBe("transparent");
+        } else {
+          expect(cell.backgroundColor).toBe("transparent");
+        }
+      });
+    });
+
     it("returns null for invalid spreadsheets", () => {
       expect(
         renderSpreadsheet(

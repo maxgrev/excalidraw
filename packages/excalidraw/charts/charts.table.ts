@@ -3,9 +3,15 @@ import {
   ROUGHNESS,
   getFontString,
   getLineHeight,
+  randomId,
 } from "@excalidraw/common";
 
-import { measureText, newElement, newTextElement } from "@excalidraw/element";
+import {
+  measureText,
+  newElementWith,
+  newElement,
+  newTextElement,
+} from "@excalidraw/element";
 
 import type { RenderEnvironment } from "@excalidraw/element";
 
@@ -103,6 +109,9 @@ export const renderTable = (
 
   const headerBackgroundColor = getBackgroundColor(getColorOffset(colorSeed));
 
+  // the whole table shares one group so it moves and selects as one
+  const groupIds = [randomId()];
+
   const elements: NonDeletedExcalidrawElement[] = [];
   let cellY = y;
   cells.forEach((row, rowIndex) => {
@@ -112,38 +121,48 @@ export const renderTable = (
       const height = rowHeights[rowIndex];
       const isHeader = rowIndex === 0;
 
-      elements.push(
-        newElement({
-          ...commonProps,
-          type: "rectangle",
-          x: cellX,
-          y: cellY,
-          width,
-          height,
-          fillStyle: "solid",
-          backgroundColor: isHeader ? headerBackgroundColor : "transparent",
-          roughness: ROUGHNESS.artist,
-        }),
-      );
+      const cell = newElement({
+        ...commonProps,
+        type: "rectangle",
+        x: cellX,
+        y: cellY,
+        width,
+        height,
+        fillStyle: "solid",
+        // the header row is visually distinct from the body rows
+        backgroundColor: isHeader ? headerBackgroundColor : "transparent",
+        roughness: ROUGHNESS.artist,
+        groupIds,
+      });
 
       // empty cells (e.g. top-left corner) get no text element
       if (text) {
+        // the text is bound to its cell as a container, so double-clicking
+        // the cell edits the text
+        const cellText = newTextElement({
+          ...commonProps,
+          text,
+          originalText: text,
+          // text is anchored at its center (center/middle aligned)
+          x: cellX + width / 2,
+          y: cellY + height / 2,
+          fontFamily,
+          fontSize,
+          lineHeight,
+          textAlign: "center",
+          verticalAlign: "middle",
+          containerId: cell.id,
+          groupIds,
+          renderEnvironment,
+        });
         elements.push(
-          newTextElement({
-            ...commonProps,
-            text,
-            originalText: text,
-            // text is anchored at its center (center/middle aligned)
-            x: cellX + width / 2,
-            y: cellY + height / 2,
-            fontFamily,
-            fontSize,
-            lineHeight,
-            textAlign: "center",
-            verticalAlign: "middle",
-            renderEnvironment,
+          newElementWith(cell, {
+            boundElements: [{ type: "text", id: cellText.id }],
           }),
+          cellText,
         );
+      } else {
+        elements.push(cell);
       }
 
       cellX += width;
