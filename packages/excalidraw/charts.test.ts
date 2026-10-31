@@ -1163,4 +1163,174 @@ describe("charts", () => {
       expect(legendTopY).toBeGreaterThan(axisBottomY + 2);
     });
   });
+
+  describe("table", () => {
+    const spreadsheet: Spreadsheet = {
+      title: "Trait",
+      labels: ["Strength", "Swordsmanship", "Politics"],
+      series: [
+        { title: "Dunk", values: [10, 8, 3] },
+        { title: "Egg", values: [2, 1, 9] },
+      ],
+    };
+
+    const getTable = (data: Spreadsheet = spreadsheet) => {
+      const elements = renderSpreadsheet("table", data, 100, 50, 1)!;
+      const cells = elements.filter((element) => element.type === "rectangle");
+      const texts = elements.filter(
+        (element): element is NonDeleted<ExcalidrawTextElement> =>
+          element.type === "text",
+      );
+      return { elements, cells, texts };
+    };
+
+    it("is valid for any spreadsheet with at least 2 dimensions", () => {
+      expect(isSpreadsheetValidForChartType(spreadsheet, "table")).toBe(true);
+      expect(
+        isSpreadsheetValidForChartType(
+          { title: null, labels: null, series: [{ title: "A", values: [1] }] },
+          "table",
+        ),
+      ).toBe(false);
+      expect(isSpreadsheetValidForChartType(null, "table")).toBe(false);
+    });
+
+    it("lays out a header row and one row per label", () => {
+      const { cells, texts } = getTable();
+
+      // 4 rows (header + 3 labels) x 3 columns (labels + 2 series)
+      expect(cells).toHaveLength(12);
+      expect(texts).toHaveLength(12);
+      expect(new Set(cells.map((cell) => cell.y)).size).toBe(4);
+      expect(new Set(cells.map((cell) => cell.x)).size).toBe(3);
+    });
+
+    it("renders header and cell text", () => {
+      const { cells, texts } = getTable();
+
+      const textAt = (row: number, column: number) => {
+        const rowY = [...new Set(cells.map((cell) => cell.y))].sort(
+          (a, b) => a - b,
+        )[row];
+        const columnX = [...new Set(cells.map((cell) => cell.x))].sort(
+          (a, b) => a - b,
+        )[column];
+        const cell = cells.find((c) => c.x === columnX && c.y === rowY)!;
+        return texts.find(
+          (text) =>
+            text.x >= cell.x &&
+            text.x + text.width <= cell.x + cell.width &&
+            text.y >= cell.y &&
+            text.y + text.height <= cell.y + cell.height,
+        )?.text;
+      };
+
+      expect([0, 1, 2].map((column) => textAt(0, column))).toEqual([
+        "Trait",
+        "Dunk",
+        "Egg",
+      ]);
+      expect([0, 1, 2].map((column) => textAt(1, column))).toEqual([
+        "Strength",
+        "10",
+        "2",
+      ]);
+      expect([0, 1, 2].map((column) => textAt(2, column))).toEqual([
+        "Swordsmanship",
+        "8",
+        "1",
+      ]);
+      expect([0, 1, 2].map((column) => textAt(3, column))).toEqual([
+        "Politics",
+        "3",
+        "9",
+      ]);
+    });
+
+    it("starts at the given position and keeps cells contiguous", () => {
+      const { cells } = getTable();
+      expect(Math.min(...cells.map((cell) => cell.x))).toBe(100);
+      expect(Math.min(...cells.map((cell) => cell.y))).toBe(50);
+
+      const first = cells[0];
+      const right = cells.find(
+        (cell) => cell.x > first.x && cell.y === first.y,
+      )!;
+      const below = cells.find(
+        (cell) => cell.y > first.y && cell.x === first.x,
+      )!;
+      expect(right.x).toBe(first.x + first.width);
+      expect(below.y).toBe(first.y + first.height);
+    });
+
+    it("sizes columns to fit their text", () => {
+      const { cells, texts } = getTable();
+      texts.forEach((text) => {
+        const cell = cells.find(
+          (c) =>
+            text.x >= c.x &&
+            text.x + text.width <= c.x + c.width &&
+            text.y >= c.y &&
+            text.y + text.height <= c.y + c.height,
+        );
+        expect(cell).toBeDefined();
+      });
+
+      const widthByColumn = new Map<number, number>();
+      cells.forEach((cell) => widthByColumn.set(cell.x, cell.width));
+      // the labels column holds the longest text, so it is the widest
+      const [labelsColumnWidth, ...seriesColumnWidths] = [
+        ...widthByColumn.entries(),
+      ]
+        .sort(([a], [b]) => a - b)
+        .map(([, width]) => width);
+      seriesColumnWidths.forEach((width) =>
+        expect(labelsColumnWidth).toBeGreaterThan(width),
+      );
+    });
+
+    it("renders only series columns when there are no labels", () => {
+      const { cells, texts } = getTable({
+        title: null,
+        labels: null,
+        series: [
+          { title: "A", values: [1, 2] },
+          { title: null, values: [3, 4] },
+        ],
+      });
+
+      // header + 2 rows, 2 columns
+      expect(cells).toHaveLength(6);
+      expect(texts.map((text) => text.text).sort()).toEqual(
+        ["1", "2", "3", "4", "A", "Series 2"].sort(),
+      );
+    });
+
+    it("does not render a text element for empty cells", () => {
+      const { cells, texts } = getTable({
+        title: null,
+        labels: ["a", "b"],
+        series: [{ title: "S", values: [1, 2] }],
+      });
+      expect(cells).toHaveLength(6);
+      expect(texts.map((text) => text.text).sort()).toEqual(
+        ["1", "2", "S", "a", "b"].sort(),
+      );
+    });
+
+    it("returns null for invalid spreadsheets", () => {
+      expect(
+        renderSpreadsheet(
+          "table",
+          {
+            title: null,
+            labels: null,
+            series: [{ title: "A", values: [1] }],
+          },
+          0,
+          0,
+        ),
+      ).toBeNull();
+    });
+  });
 });

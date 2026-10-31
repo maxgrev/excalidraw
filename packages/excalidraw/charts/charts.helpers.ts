@@ -86,6 +86,11 @@ export const isSpreadsheetValidForChartType = (
     return false;
   }
 
+  // a table has no minimum number of dimensions beyond the common one
+  if (chartType === "table") {
+    return true;
+  }
+
   if (chartType === "radar") {
     return dimensionCount >= 3;
   }

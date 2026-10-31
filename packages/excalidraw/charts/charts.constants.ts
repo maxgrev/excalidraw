@@ -37,6 +37,10 @@ export const RADAR_LEGEND_SWATCH_SIZE = 20;
 export const RADAR_LEGEND_ITEM_GAP = BAR_GAP * 2;
 export const RADAR_LEGEND_TEXT_GAP = BAR_GAP;
 
+export const TABLE_CELL_PADDING_X = BAR_GAP;
+export const TABLE_CELL_PADDING_Y = BAR_GAP / 2;
+export const TABLE_MIN_COLUMN_WIDTH = 64;
+
 // Put all common chart element properties here so properties dialog
 // shows stable values when selecting chart groups.
 export const commonProps = {
