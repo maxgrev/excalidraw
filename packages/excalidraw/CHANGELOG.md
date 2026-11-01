@@ -13,6 +13,11 @@ Please add the latest change on the top under the correct section.
 
 ## Unreleased
 
+### Paste a spreadsheet as a table (2026-11-01) [#2](https://github.com/maxgrev/excalidraw/pull/2)
+
+- Pasting spreadsheet cells now also offers a hand-drawn table, next to the bar, line and radar charts in the paste dialog.
+- The table's cells are separate text elements, so each cell's text stays editable, and the table is added as one group.
+
 ### Export API: `exportScene` (2026-10-18) [#12347](https://github.com/excalidraw/excalidraw/pull/12347)
 
 Breaking. `exportToCanvas`, `exportToBlob` and `exportToSvg` (in both `@excalidraw/excalidraw` and `@excalidraw/utils`) are replaced by a single `exportScene`, and every rendering option moved from `appState` into an explicit `config`.
